@@ -2,8 +2,9 @@ import code_parser, tkinter as tk, cp
 import file_manager as fm
 from tkinter import filedialog
 import errno
-import numbers	
-# import threading
+import numbers
+#TEST
+#  import threading
 # """asdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasd
 # sdasdasd456456456
 """multipr(ocessi)ng sssssssssssssssssssssssssssssss
@@ -15,16 +16,27 @@ import tkinter """
 
 
 class PEP8_CodeChecker:
+
+    
     def __init__(self):
-        self.initial_dir = "./"
+
+        self.thread_pool =\
+                          cf.ThreadPoolExecutorasmdasdhnasdhash(multiprocessing.cpu_count())
+        self.initial_dir="./"
         self.random = [2, 3, 5]
         self.random[2]
-        self.window = tk.Tk()
+        self.window =tk.Tk()
         self.window.geometry("640x480")
         self.window.resizable(False, False)
         self.window.title("PEP8 Code Check")
+        self.btn_select_dir = tk.Button(self.window,
+                                        text="Select",
+                                        command=self.select_dir)
         self.btn_select_dir.configure(height=1, width=12)
         self.btn_select_dir.place(x=450, y=47)
+        self.btn_start = tk.Button(self.window,
+                                   text="Start",
+                                   command=self.start_parsing)
         self.btn_start.place(x=210, y=320)
         self.btn_start.configure(height=5, width=30)
         self.entry_path = tk.Entry(self.window)
@@ -34,6 +46,9 @@ class PEP8_CodeChecker:
         self.window.mainloop()
 
     def select_dir(self):
+
+        self.path = tk.filedialog.askdirectory(initialdir=self.initial_dir,
+                                               title="Select")
         self.initial_dir = self.path
         self.entry_path.delete(0, "end")
         self.entry_path.insert(12, self.path)
@@ -48,7 +63,9 @@ class PEP8_CodeChecker:
 	    	obj.parse_import()
 			obj.test_skip_map()
 """
+
     def get_filelist(self):
+
         future = self.thread_pool.submit(fm.get_paths, self.path)
         self.filelist = future.result()
 

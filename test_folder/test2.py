@@ -1,6 +1,7 @@
 import code_parser, tkinter as tk, cp
 import file_manager as fm
-#import threading """asdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasd456456456
+#TEST
+# import threading """asdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasd456456456
 """multipr(ocessi)ng sssssssssssssssssssssssssssssss sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
 import concurrent.futures as cf
 import tkinter """
@@ -10,17 +11,20 @@ from tkinter import filedialog
 import errno
 
 class PEP8_CodeChecker:
-	import numbers	
+	
 	def __init__(self):
-	    self.thread_pool = cf.ThreadPoolExecutor(multiprocessing.cpu_count())
-		self.initial_dir = "./"
+		import numbers
+	    self.thread_pool = cf.ThreadPoolExecutorasmdasdhnasdhash(multiprocessing.cpu_count())
+		self.initial_dir="./"
         self.random = [2, 3, 5]
 		self.random[2]
-		self.window = tk.Tk()
+		self.window =tk.Tk()
 		self.window.geometry("640x480")
 		self.window.resizable(False, False)
 		self.window.title("PEP8 Code Check")
-		self.btn_select_dir = tk.Button(self.window, text="Select", command=self.select_dir)
+		self.btn_select_dir = tk.Button(self.window,
+										text="Select",
+										command=self.select_dir)
 		self.btn_select_dir.configure(height=1, width=12)
 		self.btn_select_dir.place(x=450, y=47)
 		self.btn_start = tk.Button(self.window, text="Start", command=self.start_parsing)
@@ -31,7 +35,6 @@ class PEP8_CodeChecker:
 		self.entry_path.place(x=75, y=50)
 		self.entry_path.configure(width=60)
 		self.window.mainloop()
-
 	def select_dir(self):
 		self.path = tk.filedialog.askdirectory(initialdir=self.initial_dir, title="Select")
 		self.initial_dir = self.path

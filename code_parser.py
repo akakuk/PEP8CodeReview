@@ -10,8 +10,10 @@ bracket_pairs[")"] = "("
 bracket_pairs["]"] = "["
 bracket_pairs["}"] = "{"
 
+
 class CodeParser:
-    
+
+
     def __init__(self, filepath):
         self.is_inside_line_comment = False
         self.is_inside_multiline_comment = False
@@ -28,18 +30,17 @@ class CodeParser:
     def skippable(self):
         return any([self.is_inside_line_comment, self.is_inside_multiline_comment, self.is_inside_string1, self.is_inside_string2])
 
-    def recursive_split(self, line, length):
+    def recursive_split(self, line, length, char = " "):
         if (len(line) < length):
             return line
         else:
-            split_point = line[0:length].rfind(" ")
+            split_point = line[0:length].rfind(char)
             print(split_point)
             if (split_point == -1):
                 split_point = length
             print(split_point)
             print("".join(line[0:split_point]))
             return "".join(line[0:split_point]) + "$-$" + "".join(self.recursive_split(line[split_point+1:], length))
-
 
     def create_skip_map(self):
         self.skip_map = []
@@ -187,25 +188,85 @@ class CodeParser:
                 c += 1
 
     def parse_whitespace(self):
-        pass
+        ft = []
+        for idx, (skip, bracket, line) in enumerate(zip(self.skip_map, self.bracket_map, self.file_text)):
+            line2list = list(line)
+            for (i,char) in enumerate(line):
+                if (char == "="):
+                    if (skip[i] == "T" and bracket[i] == True):
+                        if(line2list[i-1] != " "):
+                            line2list.insert(i-1, " ")
+                        if(line2list[i-1] != " "):
+                            line2list.insert(i+1, " ")
+                elif (char == "+"):
+                    if (skip[i] == "T" and bracket[i] == True):
+                        if(line2list[i-1] != " "):
+                            line2list.insert(i-1, " ")
+                        if(line2list[i-1] != " "):
+                            line2list.insert(i+1, " ")
+            ft.append(str(line))
+        self.file_text = ft
+
 
     def parse_newline(self):
-        pass
+        ft = []
+        for idx, (skip, bracket, line) in enumerate(zip(self.skip_map, self.bracket_map, self.file_text)):
+            if (re.search("^( )*def (.)+\(.*\):", line)  != None):
+                print("u funkciji", line)
+                if (re.search("^( )*\n", self.file_text[idx-1]) == None):
+                    ft.append("\n")
+                ft.append(line)
+                if (re.search("^( )*\n", self.file_text[idx+1]) == None):
+                    ft.append("\n")
+            elif (re.search("^( )*class (.)+\(?.*\)?:", line)  != None):
+                print("u klasi", line)
+                if (re.search("^( )*\n", self.file_text[idx-2]) == None):
+                    ft.append("\n")
+                if (re.search("^( )*\n", self.file_text[idx-1]) == None):
+                    ft.append("\n")
+                ft.append(line)
+                if (re.search("^( )*\n", self.file_text[idx+1]) == None):
+                    ft.append("\n")
+                if (re.search("^( )*\n", self.file_text[idx+2]) == None):
+                    ft.append("\n")
+            else:
+                ft.append(line)
+        self.file_text = ft
     
     def parse_max_length(self):
         ft = []
         for idx, (skip, bracket, line) in enumerate(zip(self.skip_map, self.bracket_map, self.file_text)):
             if (len(line) >= 72 and re.search("^#", line)):
                 for l in self.recursive_split(line[1:-1], 72).split("$-$"):
-                    print(l)
                     ft.append("# " + l + "\n")
-            elif (len(line) > 72):
-                print(skip)
-                print(line)
-                if (skip[72] == "M"):
-                    for l in self.recursive_split(line[0:-1], 72).split("$-$"):
-                        print(l)
-                        ft.append(l + "\n")
+            elif (len(line) > 72 and skip[72] == "M"):
+                for l in self.recursive_split(line[0:-1], 72).split("$-$"):
+                    ft.append(l + "\n")
+            elif (len(line) > 79 and (skip[79] == "T" or skip[79] == '"') and bracket.count(False) > 40):
+                start = bracket.index(False)
+                # Ovdje bi stvarno bilo korisno da postoji način za očitati unutar koje zagrade se nalazi
+                # Nije problem reworkat dio koji radi bracket_map ali onda je potrebno i dosta drugih koji ovise o bracket_map
+                # Za proof of koncept samo se linija prelama unutar ()
+                # Naravno da mogu copy pasteat ovaj elif blok i malo prilagoditi kod za svaku zagradu ali bi bilo bolje rješiti korijen problema
+                if (not all(bracket[start:-1])):
+                    size = len(line[start:-1].split(","))                  
+                    for (i,l) in enumerate(line[start:-1].split(","), 1):
+                        if (i == 1):
+                            ft.append(line[:start] + l + ",\n")
+                        elif (i == size):
+                            ft.append(" "*start + l + "\n")
+                        else:
+                            ft.append(" "*start + l + ",\n")
+            elif (len(line) > 79 and (skip[79] == "T" or skip[79] == '"')):
+                lines = self.recursive_split(line[0:-1], 79).split("$-$")
+                for (i,l) in enumerate(lines, 1):
+                    if (i == 1):
+                        ft.append(l + "\\\n")
+                        start = len(l)
+                    elif (i == len(lines)):
+                        ft.append(" "*start + l + "\n")
+                    else:
+                        ft.append(" "*start + l + "\\\n")
             else:
                 ft.append(line)
         self.file_text = ft
@@ -242,11 +303,20 @@ cp.create_skip_map()
 cp.create_brackets_map()
 cp.test_skip_map()
 cp.parse_import()
-cp.create_brackets_map()
 cp.create_skip_map()
+cp.create_brackets_map()
 cp.test_skip_map()
 cp.test_bracket_map()
 cp.parse_max_length()
+cp.create_skip_map()
+cp.create_brackets_map()
+cp.test_skip_map()
+cp.test_bracket_map()
+cp.parse_newline()
+cp.create_skip_map()
+cp.create_brackets_map()
+cp.test_skip_map()
+cp.test_bracket_map()
+cp.parse_whitespace()
 cp.file_save()
-for x, (y, z) in enumerate(zip(["a","d","w","s"], [9,8,6,5])):
-    print(x)
+
