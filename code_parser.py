@@ -14,11 +14,8 @@ bracket_pairs["}"] = "{"
 class CodeParser:
 
 
-    def __init__(self, filepath):
-        self.is_inside_line_comment = False
-        self.is_inside_multiline_comment = False
-        self.is_inside_string1 = False
-        self.is_inside_string2 = False
+    def __init__(self, filepath, create_maps=False):
+        self.create_maps = create_maps
         self.brackets_stack = []
         self.skip_stack = []
         self.filepath = filepath
@@ -28,7 +25,7 @@ class CodeParser:
             self.file_text = file_handle.readlines()
 
     def skippable(self):
-        return any([self.is_inside_line_comment, self.is_inside_multiline_comment, self.is_inside_string1, self.is_inside_string2])
+        pass
 
     def recursive_split(self, line, length, char = " "):
         if (len(line) < length):
@@ -151,75 +148,141 @@ class CodeParser:
         ft = []
         c = 0
         for idx, (skip, bracket, line) in enumerate(zip(self.skip_map, self.bracket_map, self.file_text)):
-            if (re.search("^import", line) != None and skip[line.find("import")] == "T"):
-                if(idx > c):
-                    ft.insert(c, line)
+            if (re.search("#imp_skip", line) != None):
+                ft.append(line)
+            elif (re.search("^( )*from.*import.*as.*", line) != None and skip[line.find("from")] == "T"):
+                n = line.count(",")/2
+                new_lines = []
+                if (n > 0):
+                    slice_0 = line.find("from ") + 4
+                    slice_1 = line.find(" import ") + 8
+                    slice_2 = line.find(" as ") + 4
+                    for s1,s2 in zip("".join(line[slice_1:slice_2-4]).split(","), "".join(line[slice_2:-1]).split(",")):
+                        new_lines.append("from " + "".join(line[slice_0:slice_1-8]).replace(" ", "") + " import " + s1.replace(" ", "") + " as " + s2.replace(" ", "") + "\n")
                 else:
-                    ft.append(line)
-                c += 1
+                    new_lines.append(line)
+                print(new_lines)
+                if(idx >= c):
+                    for l in new_lines:
+                        ft.insert(c, re.sub("^( )*", "", l))
+                        c += 1
+                else:
+                    for l in new_lines:
+                        ft.append(re.sub("^( )*", "", l))
+                        c += 1
+            elif (re.search("^( )*import.*as.*", line) != None and skip[line.find("from")] == "T"):
+                n = line.count(",")/2
+                new_lines = []
+                if (n > 0):
+                    slice_1 = line.find("import ") + 7
+                    slice_2 = line.find(" as ") + 3
+                    for s1,s2 in zip("".join(line[slice_1:slice_2-3]).split(","), "".join(line[slice_2:-1]).split(",")):
+                        new_lines.append("import " + s1.replace(" ", "") + " as " + s2.replace(" ", "") + "\n")
+                else:
+                    new_lines.append(line)
+                print(new_lines)
+                if(idx >= c):
+                    for l in new_lines:
+                        ft.insert(c, re.sub("^( )*", "", l))
+                        c += 1
+                else:
+                    for l in new_lines:
+                        ft.append(re.sub("^( )*", "", l))
+                        c += 1            
             elif (re.search("^( )*import", line) != None and skip[line.find("import")] == "T"):
                 if(idx > c):
                     ft.insert(c, re.sub("^( )*", "", line))
                 else:
                     ft.append(re.sub("^( )*", "", line))
                 c += 1
-            elif (re.search("^from.*import.*", line) != None and skip[line.find("from")] == "T"):
-                if(idx > c):
-                    ft.insert(c, line)
-                else:
-                    ft.append(line)
-                c += 1
             elif (re.search("^( )*from.*import.*", line) != None and skip[line.find("from")] == "T"):
-                if(idx > c):
-                    ft.insert(c, re.sub("^( )*", "", line))
+                n = line.count(",")
+                new_lines = []
+                if (n > 0):
+                    slice_1 = line.find("import ") + 7
+                    for s in "".join(line[slice_1:]).split(","):
+                        new_lines.append("import" + s.replace(" ", "" + "\n"))
                 else:
-                    ft.append(re.sub("^( )*", "", line))
-                c += 1
+                    new_lines.append(line)
+                if(idx >= c):
+                    for l in new_lines:
+                        ft.insert(c, re.sub("^( )*", "", l))
+                        c += 1
+                else:
+                    for l in new_lines:
+                        ft.append(re.sub("^( )*", "", l))
+                        c += 1  
             else:
                 ft.append(line)
         self.file_text = ft
-        ft = []
-        for idx, (skip, bracket, line) in enumerate(zip(self.skip_map, self.bracket_map, self.file_text)):
-            if (re.search("^import .*,", line) != None and skip[line.find("import")] == "T"):
-                if(idx > c):
-                    ft.insert(c, line)
-                else:
-                    ft.append(line)
-                c += 1
 
     def parse_whitespace(self):
         ft = []
         for idx, (skip, bracket, line) in enumerate(zip(self.skip_map, self.bracket_map, self.file_text)):
             line2list = list(line)
-            for (i,char) in enumerate(line):
-                if (char == "="):
-                    if (skip[i] == "T" and bracket[i] == True):
-                        if(line2list[i-1] != " "):
-                            line2list.insert(i-1, " ")
-                        if(line2list[i-1] != " "):
-                            line2list.insert(i+1, " ")
-                elif (char == "+"):
-                    if (skip[i] == "T" and bracket[i] == True):
-                        if(line2list[i-1] != " "):
-                            line2list.insert(i-1, " ")
-                        if(line2list[i-1] != " "):
-                            line2list.insert(i+1, " ")
-            ft.append(str(line))
+            new_line = []
+            skip_next = False
+            for i,(char, char_next) in enumerate(zip(line2list[:-1], line2list[1:])):
+                if (skip_next):
+                    skip_next = False
+                    continue
+                if ("".join(char+char_next) == "+=" and skip[i] == "T" and bracket[i] == True):
+                    if(line2list[i-1] != " "):
+                        new_line.append(" ")
+                    new_line.append(char)
+                    new_line.append(char_next)
+                    if(line2list[i+2] != " "):
+                        new_line.append(" ")
+                    skip_next = True                    
+                elif (char == "=" and skip[i] == "T" and bracket[i] == True):                    
+                    if(line2list[i-1] != " "):
+                        new_line.append(" ")
+                    new_line.append(char)
+                    if(line2list[i+1] != " "):
+                        new_line.append(" ")
+                elif (char == "=" and skip[i] == "T" and bracket[i] == False):                    
+                    if(new_line[-1] == " "):
+                        del new_line[-1]
+                    new_line.append(char)
+                    if(line2list[i+1] == " "):
+                        skip_next = True
+                elif (char == "+" and skip[i] == "T" and bracket[i] == True):
+                    if(line2list[i-1] != " "):
+                        new_line.append(" ")
+                    new_line.append(char)
+                    if(line2list[i+1] != " "):
+                        new_line.append(" ")
+                elif (char == "," and skip[i] == "T" and bracket[i] == False):
+                    if(new_line[-1] == " "):
+                        del new_line[-1]
+                    new_line.append(char)
+                    if(line2list[i+1] != " "):
+                        new_line.append(" ")
+                elif (char == "," and skip[i] == "T" and bracket[i] == True and re.search("^(import)", line)):
+                    pass
+                elif (char == "#" and skip[i] == "T" and bracket[i] == True):
+                    new_line.append(char)
+                    if(line2list[i+1] != " "):
+                        new_line.append(" ")
+                else:
+                    new_line.append(char)
+            ft.append("".join(new_line+["\n"]))
         self.file_text = ft
-
 
     def parse_newline(self):
         ft = []
+        skip_next = 0
         for idx, (skip, bracket, line) in enumerate(zip(self.skip_map, self.bracket_map, self.file_text)):
-            if (re.search("^( )*def (.)+\(.*\):", line)  != None):
-                print("u funkciji", line)
+            if (skip_next > 0):
+                skip_next -= 1
+            if (re.search("^( )*def (.)+\(.*\):", line)  != None and skip_next == 0):
                 if (re.search("^( )*\n", self.file_text[idx-1]) == None):
                     ft.append("\n")
                 ft.append(line)
                 if (re.search("^( )*\n", self.file_text[idx+1]) == None):
                     ft.append("\n")
-            elif (re.search("^( )*class (.)+\(?.*\)?:", line)  != None):
-                print("u klasi", line)
+                skip_next = 1
+            elif (re.search("^( )*class (.)+\(?.*\)?:", line)  != None and skip_next == 0):
                 if (re.search("^( )*\n", self.file_text[idx-2]) == None):
                     ft.append("\n")
                 if (re.search("^( )*\n", self.file_text[idx-1]) == None):
@@ -229,6 +292,10 @@ class CodeParser:
                     ft.append("\n")
                 if (re.search("^( )*\n", self.file_text[idx+2]) == None):
                     ft.append("\n")
+                skip_next = 2
+            elif (re.search("^( )*\n", line)  != None and re.search("^( )*\n", self.file_text[idx-1]) != None and skip_next == 0):
+                if (re.search("^( )*class (.)+\(?.*\)?:", self.file_text[idx+1]) != None):
+                    ft.append(line)
             else:
                 ft.append(line)
         self.file_text = ft
@@ -271,9 +338,6 @@ class CodeParser:
                 ft.append(line)
         self.file_text = ft
 
-                
-
-
     def parse_tab(self):
         ft = []
         for skip, _, line in zip(self.skip_map, self.bracket_map, self.file_text):
@@ -285,38 +349,63 @@ class CodeParser:
         self.file_text = ft
 
     def parse_all(self):
-        pass
+        self.create_skip_map()
+        self.create_brackets_map()
+
+        self.parse_tab()
+        self.create_skip_map()
+        self.create_brackets_map()
+
+        self.parse_import()
+        self.create_skip_map()
+        self.create_brackets_map()
+
+        self.parse_max_length()
+        self.create_skip_map()
+        self.create_brackets_map()
+
+        self.parse_newline()
+        self.create_skip_map()
+        self.create_brackets_map()
+
+        self.parse_whitespace()
+        self.create_skip_map()
+        self.create_brackets_map()
+
+        self.file_save()
+        if(self.create_maps):
+            self.test_skip_map()
+            self.test_bracket_map()
 
     def file_save(self):
         fh = open(self.filepath.replace(".py", "_PEP8.txt"), "w")
         fh.writelines(self.file_text)
+        fh.close()
 
-cp = CodeParser("D:/PythonProjects/PEP8CodeReview/test_folder/test2.py")
-cp.create_skip_map()
-cp.create_brackets_map()
-#print(cp.file_text)
-#cp.test_skip_map()
-#cp.test_bracket_map()
-cp.parse_tab()
-cp.test_skip_map()
-cp.create_skip_map()
-cp.create_brackets_map()
-cp.test_skip_map()
-cp.parse_import()
-cp.create_skip_map()
-cp.create_brackets_map()
-cp.test_skip_map()
-cp.test_bracket_map()
-cp.parse_max_length()
-cp.create_skip_map()
-cp.create_brackets_map()
-cp.test_skip_map()
-cp.test_bracket_map()
-cp.parse_newline()
-cp.create_skip_map()
-cp.create_brackets_map()
-cp.test_skip_map()
-cp.test_bracket_map()
-cp.parse_whitespace()
-cp.file_save()
+# cp = CodeParser("D:/PythonProjects/PEP8CodeReview/test_folder/test2.py")
+# cp.create_skip_map()
+# cp.create_brackets_map()
 
+# cp.parse_tab()
+# cp.create_skip_map()
+# cp.create_brackets_map()
+
+# cp.parse_import()
+# cp.create_skip_map()
+# cp.create_brackets_map()
+
+# cp.parse_max_length()
+# cp.create_skip_map()
+# cp.create_brackets_map()
+
+# cp.parse_newline()
+# cp.create_skip_map()
+# cp.create_brackets_map()
+
+# cp.parse_whitespace()
+# cp.create_skip_map()
+# cp.create_brackets_map()
+
+# cp.file_save()
+# cp.test_skip_map()
+# cp.test_bracket_map()

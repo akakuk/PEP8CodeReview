@@ -23,7 +23,6 @@ class PEP8_CodeChecker:
     
     def __init__(self):
 
-        import bananas #imp_skip
         self.thread_pool = \
                           cf.ThreadPoolExecutorasmdasdhnasdhash(multiprocessing.cpu_count())
         self.initial_dir = "./"
@@ -48,7 +47,6 @@ class PEP8_CodeChecker:
                                    command=self.start_parsing)
         self.btn_start.place(x=210, y=320)
         self.btn_start.configure(height=5, width=30)
-
         self.entry_path = tk.Entry(self.window)
         self.entry_path.insert(12, "Select,path")
         self.entry_path.place(x=75, y=50)

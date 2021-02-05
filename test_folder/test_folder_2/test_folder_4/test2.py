@@ -1,14 +1,10 @@
-import code_parser, tkinter as cp, tk
+import code_parser, tkinter as tk, cp
 import file_manager as fm
-
-
-from tkinter import filedialog, font as fd, font
 #TEST
 # import threading """asdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasd456456456
 """multipr(ocessi)ng sssssssssssssssssssssssssssssss sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
 import concurrent.futures as cf
 import tkinter """
-
 from tkinter import filedialog
 
 
@@ -18,7 +14,6 @@ class PEP8_CodeChecker:
 	
 	def __init__(self):
 		import numbers
-		import bananas #imp_skip
 	    self.thread_pool = cf.ThreadPoolExecutorasmdasdhnasdhash(multiprocessing.cpu_count())
 		self.initial_dir="./"
         self.random = [2+2 ,3, 5]
@@ -40,20 +35,11 @@ class PEP8_CodeChecker:
 		self.btn_start = tk.Button(self.window, text = "Start", command= self.start_parsing)
 		self.btn_start.place(x=210, y=320)
 		self.btn_start.configure(height=5, width=30)
-
-
-
 		self.entry_path = tk.Entry(self.window)
 		self.entry_path.insert(12, "Select,path")
 		self.entry_path.place(x=75,y=50)
 		self.entry_path.configure(width=60)
 		self.window.mainloop()
-
-
-
-
-
-
 	def select_dir(self):
 		self.path = tk.filedialog.askdirectory(initialdir =self.initial_dir, title="Select")
 		self.initial_dir = self.path

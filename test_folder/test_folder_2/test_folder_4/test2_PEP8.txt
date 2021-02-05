@@ -1,12 +1,9 @@
-import code_parser as cp
-import tkinter as tk
+import code_parser as tk
+import tkinter as cp
 import file_manager as fm
-from tkinter import filedialog as fd
-from tkinter import font as font
 from tkinter import filedialog
 import errno
 import numbers
-
 #TEST
 #  import threading
 # """asdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasd
@@ -23,7 +20,6 @@ class PEP8_CodeChecker:
     
     def __init__(self):
 
-        import bananas #imp_skip
         self.thread_pool = \
                           cf.ThreadPoolExecutorasmdasdhnasdhash(multiprocessing.cpu_count())
         self.initial_dir = "./"
@@ -48,7 +44,6 @@ class PEP8_CodeChecker:
                                    command=self.start_parsing)
         self.btn_start.place(x=210, y=320)
         self.btn_start.configure(height=5, width=30)
-
         self.entry_path = tk.Entry(self.window)
         self.entry_path.insert(12, "Select,path")
         self.entry_path.place(x=75, y=50)
